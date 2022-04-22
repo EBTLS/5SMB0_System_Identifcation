@@ -82,20 +82,22 @@ Ts = 1;
 n_freq = 128;
 
 % set the base frequency
-f0 = 2/128;
+w0 = 2/128;
 
 % generate reference signal
-f = [0: 1: N-1]/Ts;
+t = [0: 1: N-1]/Ts;
 r=0;
 for i = 1: 1: n_freq
-    r = r + 3 * sin(f0*i*f) + offset;
+    r = r + 3 * sin(w0*i*t) + offset;
 end
 
 % analysis reference spectrum
-w=fft(r);
-plot(abs(w))
+w = fft(r);
+w = circshift(w, N/2);
+wf = [-N/2+1: N/2]*w0/2;
+plot(wf, abs(w))
+xlabel("w"); ylabel("amplitude"); title("FFT of reference signal");
 grid on;
-title("DFT of reference signal")
 
 % plot reference signal
 figure;
@@ -129,7 +131,7 @@ title("DFT of input signal")
 % Design a zero input, that is the output y will totally be noise signal
 period = 128;
 N = 1024;
-r = 0*sin( [0: 1: N-1] * pi / period )
+r = 0*sin( [0: 1: N-1] * pi / period );
 
 figure;
 plot(r)
@@ -167,63 +169,63 @@ cpsd(v, v, 1024)
 
 %% 4.1 OE Model
 
-% First Try OE Model
-% divide the dataset into training set and validation set
-[r,P,w] = Generate_PRBS(0.83, 3000, 3, false);
-[u,y] = assignment_sys_36(r);
-train_ratio = 0.7;
-u_train = u([1: floor(train_ratio * length(u))]);
-y_train = y([1: floor(train_ratio * length(y))]);
-u_test = u([floor(train_ratio * length(u))+1: end]);
-y_test = y([floor(train_ratio * length(y))+1: end]);
+% % First Try OE Model
+% % divide the dataset into training set and validation set
+% [r,P,w] = Generate_PRBS(0.83, 3000, 3, false);
+% [u,y] = assignment_sys_36(r);
+% train_ratio = 0.7;
+% u_train = u([1: floor(train_ratio * length(u))]);
+% y_train = y([1: floor(train_ratio * length(y))]);
+% u_test = u([floor(train_ratio * length(u))+1: end]);
+% y_test = y([floor(train_ratio * length(y))+1: end]);
+% 
+% % prepare loop for order selection
+% order_upper = 20;
+% nb = 0; nf = 0; nk = 0;
+% 
+% OE.order.order_points = [];
+% OE.order.order_config = [];
+% OE.order.error = [];
+% 
+% for order_sum = 1: 1: order_upper
+%     
+%     for nb = 0: 1: order_sum
+%         
+%         for nf = 0: 1: order_sum - nb
+%             
+%             nk = order_sum - nb - nf;
+%             % for OE model, nk and nb cannot be zero at the same time
+%             if nk == 0 && nb == 0
+%                 continue;
+%             end
+%             
+%             % identify a model
+%             temp_sys = oe(iddata(y_train, u_train), [nb, nf, nk]);
+%             % cost validate error
+%             temp_predict_error = pe(temp_sys, iddata(y_test, u_test), 1);
+%             temp_error = temp_predict_error.y' * temp_predict_error.y / length(y_test);
+%             
+%             % abort too abnormal result
+%             if temp_error > 50
+%                 continue;
+%             end
+%             
+%             OE.order.order_points = [OE.order.order_points, order_sum];
+%             OE.order.order_config = [OE.order.order_config, [nb; nf; nk]];
+%             OE.order.error = [OE.order.error, temp_error];
+%             
+%         end
+%                   
+%     end
+% end
+% scatter(OE.order.order_points, OE.order.error);
 
-% prepare loop for order selection
-order_upper = 20;
-nb = 0; nf = 0; nk = 0;
 
-OE.order.order_points = [];
-OE.order.order_config = [];
-OE.order.error = [];
-
-for order_sum = 1: 1: order_upper
-    
-    for nb = 0: 1: order_sum
-        
-        for nf = 0: 1: order_sum - nb
-            
-            nk = order_sum - nb - nf;
-            % for OE model, nk and nb cannot be zero at the same time
-            if nk == 0 && nb == 0
-                continue;
-            end
-            
-            % identify a model
-            temp_sys = oe(iddata(y_train, u_train), [nb, nf, nk]);
-            % cost validate error
-            temp_predict_error = pe(temp_sys, iddata(y_test, u_test), 1);
-            temp_error = temp_predict_error.y' * temp_predict_error.y / length(y_test);
-            
-            % abort too abnormal result
-            if temp_error > 50
-                continue;
-            end
-            
-            OE.order.order_points = [OE.order.order_points, order_sum];
-            OE.order.order_config = [OE.order.order_config, [nb; nf; nk]];
-            OE.order.error = [OE.order.error, temp_error];
-            
-        end
-                  
-    end
-end
-scatter(OE.order.order_points, OE.order.error);
-
-
-% choose the optimal model
-[M, I] = min(OE.order.error)
-OE.model_configuration = OE.order.order_config(:, I);
-OE.model_order = OE.order.order_points(I);
-OE.model_configuration
+% % choose the optimal model
+% [M, I] = min(OE.order.error);
+% OE.model_configuration = OE.order.order_config(:, I);
+% OE.model_order = OE.order.order_points(I);
+% OE.model_configuration
 
 % generate input-output signal
 [r,P,w] = Generate_PRBS(0.83, 3000, 3, false);
