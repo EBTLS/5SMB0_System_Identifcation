@@ -370,8 +370,8 @@ clear k Loop
 %% Part 6: Estimation of a Box Jenkins model for minimum variance
 
 %% 6.1. Identify an BJ model
-nb = 3;
-nf = 13;
+nb = 4;
+nf = 14;
 nc = 3;
 nd = 5;
 nk = 1;
@@ -382,10 +382,13 @@ BJ.sys = bj(iddata(y,u), [nb, nc, nd, nf, nk]);
 % resid test
 figure;
 resid(iddata(y,u), BJ.sys)
+grid on
 
 % bode graph of ETFE and identifed BJ model
 figure;
 bode(BJ.sys, G_ETFE)
+legend('BJ','ETFE')
+grid on
 
 % bode graph of the noise signal power spectrum and identified H in the
 
@@ -393,16 +396,18 @@ bode(BJ.sys, G_ETFE)
 plotopts2 = bodeoptions;
 plotopts2.FreqScale = 'linear';
 plotopts2.XLim = {[0,4]};
-plotopts2. Ylim = {[-30,30]};
+% plotopts2. Ylim = {[-50,50]};
 plotopts2.Grid = 'on';
 
 % bode graph of identified H
+figure
 H = tf(BJ.sys.C, BJ.sys.D, -1, 'Variable', 'z^-1');
 bode(H,plotopts2)
 grid on;
 title('bode graph of H1');
 
 % noise spectrum 
+figure
 cpsd(v, v, 1024);
 title('noise sepctrum')
 
